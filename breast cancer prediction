@@ -1,0 +1,63 @@
+import sys
+import numpy as np
+
+def main():
+    try:
+        from sklearn.datasets import load_breast_cancer
+        from sklearn.model_selection import train_test_split
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.metrics import (
+            accuracy_score,
+            confusion_matrix,
+            classification_report,
+            roc_auc_score
+        )
+    except Exception as e:
+        print("Required packages missing. Run: pip install numpy pandas scikit-learn", file=sys.stderr)
+        raise e
+
+    # 1. Load dataset
+    data = load_breast_cancer()
+    X = data.data
+    y = data.target
+    print(f"Dataset shape: X={X.shape}, y={y.shape}")
+    print(f"Feature names (first 10): {data.feature_names[:10]}")
+
+    # 2. Split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    print(f"Train/Test sizes: {X_train.shape[0]}/{X_test.shape[0]}")
+
+    # 3. Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # 4. Train logistic regression
+    model = LogisticRegression(solver='liblinear', max_iter=1000, random_state=42)
+    model.fit(X_train_scaled, y_train)
+
+    # 5. Predict & evaluate
+    y_pred = model.predict(X_test_scaled)
+    y_proba = model.predict_proba(X_test_scaled)[:, 1]
+
+    acc = accuracy_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+    report = classification_report(y_test, y_pred, digits=4)
+    roc_auc = roc_auc_score(y_test, y_proba)
+
+    print("\n=== Evaluation ===")
+    print(f"Accuracy: {acc:.4f}")
+    print("Confusion matrix:")
+    print(cm)
+    print("\nClassification report:")
+    print(report)
+    print(f"ROC AUC: {roc_auc:.4f}")
+
+    # Sample expected outputs (approx. numbers - may vary by run)
+    print("\nNOTE: Typical expected accuracy on this dataset: ~0.90–0.98 depending on split.")
+
+if __name__ == '__main__':
+    main()
